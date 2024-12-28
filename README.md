@@ -1,6 +1,6 @@
 # MonitoringBot
 
-A lightweight Telegram bot for monitoring server health. This bot provides real-time CPU usage, CPU temperature, and RAM statistics and sends alerts if thresholds are exceeded. Designed to work exclusively on Linux systems.
+A lightweight Telegram bot for monitoring server health. This bot provides real-time CPU usage, CPU temperature, and RAM statistics, while sending alerts if thresholds are exceeded. Designed to work exclusively on Linux systems.
 
 ---
 
@@ -8,6 +8,8 @@ A lightweight Telegram bot for monitoring server health. This bot provides real-
 
 - Real-time server statistics: CPU usage, CPU temperature, RAM utilization.
 - Alerts for exceeding thresholds (e.g., high temperature or CPU load).
+- Configurable alert limits.
+- Token management through an external file.
 - Easily configurable for auto-start as a `systemd` service.
 
 ---
@@ -63,23 +65,29 @@ A lightweight Telegram bot for monitoring server health. This bot provides real-
    pip install -r requirements.txt
    ```
 
-3. Edit the bot's script to include your Telegram Bot API token:
-   Open `MonitoringBot.py` and replace the placeholder:
-   ```python
-   API_token = "Your TG API token"
-   ```
+3. Set up the bot's token:
+   - The bot reads its token from a file named `token` in the root directory. If this file does not exist, it will be created automatically with placeholder text.
+   - Open the `token` file and replace its contents with your Telegram Bot API token:
+     ```
+     PUT YOUR TG API TOKEN HERE
+     ```
 
 4. Configure alert thresholds in the script if needed:
    ```python
    # Example threshold values:
-   cpu_limit = 50  # CPU usage limit in percent
+   cpu_limit = 60  # CPU usage limit in percent
    temp_limit = 60  # CPU temperature limit in Celsius
-   ram_limit = 65  # RAM usage limit in percent
+   ram_limit = 80  # RAM usage limit in percent
    ```
 
 ---
 
 ## Usage
+
+### Commands
+
+- `/stats`: Displays current server statistics, including CPU usage, CPU temperature, RAM usage, and available RAM. Indicates whether monitoring is enabled.
+- `/start_monitoring`: Starts the monitoring process. The bot will send alerts if any thresholds are exceeded.
 
 ### Running the Bot Manually
 
@@ -88,9 +96,7 @@ A lightweight Telegram bot for monitoring server health. This bot provides real-
    python MonitoringBot.py
    ```
 
-2. Use `/stats` in your Telegram chat to receive server statistics.
-
-3. Start monitoring with `/start_monitoring`. The bot will notify you if thresholds are exceeded.
+2. Use the commands mentioned above in your Telegram chat.
 
 ---
 
@@ -155,7 +161,8 @@ To ensure the bot starts automatically at system boot:
 - **Linux Only**: This bot is not compatible with other operating systems.
 - **Dependencies**: Ensure all Python dependencies are installed using the provided `requirements.txt` file.
 - **lm-sensors Configuration**: Always run `sensors-detect` after installing `lm-sensors` to configure hardware monitoring correctly.
-- **Customizable Intervals**: Modify the `metrics_frequency` variable in the script to set how often the bot checks server metrics (default is 60 seconds).
+- **Customizable Intervals**: Modify the `metrics_frequency` variable in the script to set how often the bot checks server metrics (default is 20 seconds).
+- **Token Management**: The bot will not run until a valid Telegram Bot API token is provided in the `token` file.
 
 ---
 

@@ -5,17 +5,32 @@ import re
 from telebot import types
 import time
 from threading import Thread
+import os
 
-#PASTE YOUR TELEGRAM BOT API TOKEN
-API_token = "Your TG API token"
 
 # How often will the bot check server statistics (in seconds)
-metrics_frequency = 60
+metrics_frequency = 20
 
 #Limits for alerting
-cpu_limit=50
+cpu_limit=60
 temp_limit=60
-ram_limit=65
+ram_limit=80
+
+#Variable to check if monitoring already enabled
+is_monitoring_enabled=False
+
+#Path to file with token. Default: ./token
+token_file_path="token"
+
+def get_token():
+    global API_token
+    if not os.path.exists(token_file_path):
+        with open(token_file_path, "w") as file:
+            file.write("PUT YOUR TG API TOKEN HERE")
+
+    with open(token_file_path, "r") as file:
+        API_token = file.read()
+get_token()
 
 def bytes_to_gigabytes(value):
     return round(value/1024**3,2)
@@ -50,18 +65,24 @@ def get_ram_available():
     return bytes_to_gigabytes(memory.available)
 
 
+if not API_token=="":
+    bot = telebot.TeleBot(API_token)
+else:
+    print(f"Put your TG bot token in {token_file_path} file!")
 
-bot = telebot.TeleBot(API_token)
 
 @bot.message_handler(commands=['stats'])
 def stats(message):
-    bot.reply_to(message, 
+    response = (
         f"<b><em>Server stats:</em></b>\n"
         f"CPU Usage: <b><em>{get_cpu_usage()}%</em></b>\n"
         f"CPU Temp: <b><em>{get_cpu_temperature()}°</em></b>\n"
         f"RAM Used: <b><em>{get_ram_percent()}%</em></b>\n"
-        f"Available RAM: <b><em>{get_ram_available()}GB</em></b>\n",parse_mode='html'
+        f"Available RAM: <b><em>{get_ram_available()}GB</em></b>"
     )
+    if is_monitoring_enabled:
+        response+="\n\n<b><em>🟢 Monitoring enabled.</em></b>"
+    bot.reply_to(message, response,parse_mode='html')
 
 def monitor_server(chat_id, cpu_limit, temp_limit, ram_limit):
     while True:
@@ -81,14 +102,20 @@ def monitor_server(chat_id, cpu_limit, temp_limit, ram_limit):
 
 
 def start_monitoring(chat_id):
-    monitor_thread = Thread(target=monitor_server, args=(chat_id,cpu_limit,temp_limit,ram_limit))
-    monitor_thread.daemon = True
-    monitor_thread.start()
+    global is_monitoring_enabled
+    if is_monitoring_enabled:
+        bot.send_message(chat_id, "🛠️ Monitoring already started.")
+    elif not is_monitoring_enabled:
+        monitor_thread = Thread(target=monitor_server, args=(chat_id,cpu_limit,temp_limit,ram_limit))
+        monitor_thread.daemon = True
+        monitor_thread.start()
+        bot.send_message(chat_id, "🛠️ Monitoring started.")
+        is_monitoring_enabled=True
+
 
 @bot.message_handler(commands=['start_monitoring'])
 def start_monitoring_handler(message):
     chat_id = message.chat.id
-    bot.send_message(chat_id, "🛠️ Monitoring started.")
     start_monitoring(chat_id)    
 
 
