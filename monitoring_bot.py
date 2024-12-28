@@ -70,6 +70,15 @@ if not API_token=="":
 else:
     print(f"Put your TG bot token in {token_file_path} file!")
 
+@bot.message_handler(commands=['limits'])
+def limits(message):
+        chat_id = message.chat.id
+        response = (
+            f"🛠️ CPU usage threshhold: {cpu_limit}%\n"
+            f"🛠️ CPU temperature threshhold: {temp_limit}°\n"
+            f"🛠️ RAM usage threshhold: {ram_limit}%\n"
+        )
+        bot.send_message(chat_id,response,parse_mode='html')
 
 @bot.message_handler(commands=['stats'])
 def stats(message):
