@@ -29,7 +29,7 @@ def get_token():
             file.write("PUT YOUR TG API TOKEN HERE")
 
     with open(token_file_path, "r") as file:
-        API_token = file.read()
+        API_token = file.read().strip()
 get_token()
 
 def bytes_to_gigabytes(value):
@@ -63,7 +63,6 @@ def get_ram_percent():
 def get_ram_available():
     memory = psutil.virtual_memory()
     return bytes_to_gigabytes(memory.available)
-
 
 if not API_token=="":
     bot = telebot.TeleBot(API_token)
