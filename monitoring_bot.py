@@ -157,6 +157,10 @@ def start_monitoring_handler(message):
     else:
             bot.send_message(message.chat.id,"You don't have access to this bot!",parse_mode='html')
 
+def send_start_message():
+    for user in authorized_users:
+        bot.send_message(user,"Bot started!")
+send_start_message()
 
 bot.polling(none_stop=True)
 
