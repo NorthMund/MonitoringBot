@@ -22,6 +22,9 @@ is_monitoring_enabled=False
 #Path to file with token. Default: ./token
 token_file_path="token"
 
+#Path to file with user, who has access to bot
+users_file_path="authorized_users"
+
 def get_token():
     global API_token
     if not os.path.exists(token_file_path):
@@ -31,6 +34,25 @@ def get_token():
     with open(token_file_path, "r") as file:
         API_token = file.read().strip()
 get_token()
+
+def get_authorized_users():
+    global authorized_users
+    if not os.path.exists(users_file_path):
+        with open(users_file_path, "w") as file:
+            file.write("PUT USERS TG ID WITH DELIMETER \";\"")
+
+    with open(users_file_path, "r") as file:
+        content = file.read().strip()
+        authorized_users = content.split(";") if content else []
+    for user in authorized_users:
+        user = user.split()
+get_authorized_users()
+
+def has_access(user_id):
+    if str(user_id) in authorized_users:
+        return True
+    else: 
+        return False
 
 def bytes_to_gigabytes(value):
     return round(value/1024**3,2)
@@ -71,26 +93,32 @@ else:
 
 @bot.message_handler(commands=['limits'])
 def limits(message):
-        chat_id = message.chat.id
-        response = (
-            f"🛠️ CPU usage threshhold: {cpu_limit}%\n"
-            f"🛠️ CPU temperature threshhold: {temp_limit}°\n"
-            f"🛠️ RAM usage threshhold: {ram_limit}%\n"
-        )
-        bot.send_message(chat_id,response,parse_mode='html')
+        if has_access(message.chat.id):
+            chat_id = message.chat.id
+            response = (
+                f"🛠️ CPU usage threshhold: {cpu_limit}%\n"
+                f"🛠️ CPU temperature threshhold: {temp_limit}°\n"
+                f"🛠️ RAM usage threshhold: {ram_limit}%\n"
+            )
+            bot.send_message(chat_id,response,parse_mode='html')
+        else:
+            bot.send_message(message.chat.id,"You don't have access to this bot!",parse_mode='html')
 
 @bot.message_handler(commands=['stats'])
 def stats(message):
-    response = (
-        f"<b><em>Server stats:</em></b>\n"
-        f"CPU Usage: <b><em>{get_cpu_usage()}%</em></b>\n"
-        f"CPU Temp: <b><em>{get_cpu_temperature()}°</em></b>\n"
-        f"RAM Used: <b><em>{get_ram_percent()}%</em></b>\n"
-        f"Available RAM: <b><em>{get_ram_available()}GB</em></b>"
-    )
-    if is_monitoring_enabled:
-        response+="\n\n<b><em>🟢 Monitoring enabled.</em></b>"
-    bot.reply_to(message, response,parse_mode='html')
+    if has_access(message.chat.id):
+        response = (
+            f"<b><em>Server stats:</em></b>\n"
+            f"CPU Usage: <b><em>{get_cpu_usage()}%</em></b>\n"
+            f"CPU Temp: <b><em>{get_cpu_temperature()}°</em></b>\n"
+            f"RAM Used: <b><em>{get_ram_percent()}%</em></b>\n"
+            f"Available RAM: <b><em>{get_ram_available()}GB</em></b>"
+        )
+        if is_monitoring_enabled:
+            response+="\n\n<b><em>🟢 Monitoring enabled.</em></b>"
+        bot.reply_to(message, response,parse_mode='html')
+    else:
+            bot.send_message(message.chat.id,"You don't have access to this bot!",parse_mode='html')
 
 def monitor_server(chat_id, cpu_limit, temp_limit, ram_limit):
     while True:
@@ -123,8 +151,11 @@ def start_monitoring(chat_id):
 
 @bot.message_handler(commands=['start_monitoring'])
 def start_monitoring_handler(message):
-    chat_id = message.chat.id
-    start_monitoring(chat_id)    
+    if has_access(message.chat.id):
+        chat_id = message.chat.id
+        start_monitoring(chat_id)
+    else:
+            bot.send_message(message.chat.id,"You don't have access to this bot!",parse_mode='html')
 
 
 bot.polling(none_stop=True)
